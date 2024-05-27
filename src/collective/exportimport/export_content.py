@@ -430,6 +430,7 @@ class ExportContent(BrowserView):
         item = self.export_constraints(item, obj)
         item = self.export_workflow_history(item, obj)
         item = self.export_revisions(item, obj)
+        item = self.fix_links(item, obj)
 
         if self.migration:
             item = self.update_data_for_migration(item, obj)
@@ -534,6 +535,82 @@ class ExportContent(BrowserView):
         # This is done in @@fix_html
 
         return item
+
+    def fix_links(self, item, obj):
+        """Fix links in rich text fields to convert resolveuid to normal URLs."""
+        for field_name, field_value in item.items():
+            if isinstance(field_value, dict) and field_value.get(
+                "content-type", ""
+            ).startswith("text/html"):
+                html = field_value.get("data", "")
+                if html:
+                    soup = BeautifulSoup(html, "html.parser")
+                    old_portal_url = api.portal.get().absolute_url()
+
+                    for tag, attr in [
+                        (tag, attr)
+                        for attr, tags in [
+                            ("href", ["a"]),
+                        ]
+                        for tag in tags
+                    ]:
+                        self.fix_link_attr(soup, tag, attr, old_portal_url, obj=obj)
+
+                    # Update the field with fixed links
+                    field_value["data"] = str(soup)
+                    logger.debug("Updated HTML content for field: %s", field_name)
+                else:
+                    logger.debug("No HTML content found for field: %s", field_name)
+            else:
+                logger.debug("Skipping non-HTML field: %s", field_name)
+        return item
+
+    def fix_link_attr(self, soup, tag, attr, old_portal_url, obj=None):
+        """Fix the attribute of every matching tag passed within the soup."""
+        logger.info(tag)
+        logger.info(attr)
+        for content_link in soup.find_all(tag):
+            origlink = content_link.get(attr)
+            if not origlink:
+                # Ignore tags without attr
+                continue
+            orig = content_link.decode()  # to compare
+
+            parsed_link = urlparse(origlink)
+            if parsed_link.scheme in ["mailto", "file"]:
+                continue
+
+            if parsed_link.netloc and parsed_link.netloc not in old_portal_url:
+                # skip external url
+                print("old_portal_url")
+                continue
+
+            path = parsed_link.path
+            if not path:
+                # link to anchor only?
+                continue
+
+            # get uuid from link with resolveuid
+            components = path.split("/")
+            if "resolveuid" in components:
+                print("in resolveduid")
+                uid = components[components.index("resolveuid") + 1]
+                target_obj = api.content.get(UID=uid)
+                if target_obj:
+                    new_href = target_obj.absolute_url()
+                    if parsed_link.fragment:
+                        new_href += "#" + parsed_link.fragment
+
+                    new_href = new_href.split("/Plone", 1)[-1]
+                    content_link[attr] = new_href
+                    logger.debug(
+                        "Changed %s %s from %s to %s", tag, attr, origlink, new_href
+                    )
+                print(new_href)
+            else:
+                logger.debug("No resolveuid found in %s", origlink)
+
+        return soup
 
     def fix_url(self, item, obj):
         """Fix the id. Mostly relevant for collections, where the id is set to “@@export-content”
