@@ -1,13 +1,22 @@
 # -*- coding: utf-8 -*-
+import json
+import logging
+import os
+import tempfile
+from operator import itemgetter
+
+import pkg_resources
+import six
 from Acquisition import aq_base
 from App.config import getConfiguration
-from collective.exportimport import _
-from collective.exportimport import config
-from collective.exportimport.interfaces import IBase64BlobsMarker
-from collective.exportimport.interfaces import IMigrationMarker
-from collective.exportimport.interfaces import IPathBlobsMarker
-from collective.exportimport.interfaces import IRawRichTextMarker
-from operator import itemgetter
+from bs4 import BeautifulSoup
+from collective.exportimport import _, config
+from collective.exportimport.interfaces import (
+    IBase64BlobsMarker,
+    IMigrationMarker,
+    IPathBlobsMarker,
+    IRawRichTextMarker,
+)
 from plone import api
 from plone.app.layout.viewlets.content import ContentHistoryViewlet
 from plone.i18n.normalizer.interfaces import IIDNormalizer
@@ -15,24 +24,15 @@ from plone.restapi.interfaces import ISerializeToJson
 from plone.restapi.serializer.converters import json_compatible
 from plone.uuid.interfaces import IUUID
 from Products.CMFPlone.interfaces import IPloneSiteRoot
-from Products.CMFPlone.interfaces.constrains import ENABLED
-from Products.CMFPlone.interfaces.constrains import ISelectableConstrainTypes
+from Products.CMFPlone.interfaces.constrains import ENABLED, ISelectableConstrainTypes
 from Products.CMFPlone.utils import safe_unicode
 from Products.Five import BrowserView
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
-from zope.component import getMultiAdapter
-from zope.component import getUtility
+from six.moves.urllib.parse import urlparse
+from zope.component import getMultiAdapter, getUtility
 from zope.i18n import translate
-from zope.interface import alsoProvides
-from zope.interface import noLongerProvides
+from zope.interface import alsoProvides, noLongerProvides
 from zope.schema import getFields
-
-import json
-import logging
-import os
-import pkg_resources
-import six
-import tempfile
 
 try:
     pkg_resources.get_distribution("Products.Archetypes")

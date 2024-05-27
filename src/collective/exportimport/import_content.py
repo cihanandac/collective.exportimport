@@ -413,7 +413,7 @@ class ImportContent(BrowserView):
                 logger.debug("Checking by priref")
                 if item["@type"] == "exhibition":
                     priref_value = item.get("priref")
-                    logger.debug(f"priref value={priref_value}")
+                    # logger.debug(f"priref value={priref_value}")
                     if priref_value:
                         priref_items = catalog.unrestrictedSearchResults(
                             portal_type="exhibition", priref=priref_value
@@ -427,7 +427,7 @@ class ImportContent(BrowserView):
                 else:
                     logger.debug("Item type is not exhibition or priref not found")
 
-            logger.debug(f"Existing= {existing}")
+            # logger.debug(f"Existing= {existing}")
             if existing:
                 if self.handle_existing_content == 0:
                     logger.info(
