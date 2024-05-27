@@ -338,7 +338,7 @@ class ExportContent(BrowserView):
         logger.info(u"Exporting {} {}".format(len(brains), self.portal_type))
 
         # Override richtext serializer to export links using resolveuid/xxx
-        alsoProvides(self.request, IRawRichTextMarker)
+        # alsoProvides(self.request, IRawRichTextMarker)
 
         for index, brain in enumerate(brains, start=1):
             skip = False
