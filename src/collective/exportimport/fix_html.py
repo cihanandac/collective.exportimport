@@ -247,9 +247,7 @@ def find_object(base, path):
         return target
 
 
-def fix_html_in_content_fields(
-    context=None, commit=True, fixers=None, apply_default_fixer=True
-):
+def fix_html_in_content_fields(context=None, commit=True, fixers=None):
     """Fix html this after importing content into Plone 5 or 6.
     When calling this from your code you can pass additional fixers to modify the html.
 
@@ -298,16 +296,7 @@ def fix_html_in_content_fields(
     else:
         if not isinstance(fixers, list):
             fixers = [fixers]
-        fixers = [i for i in fixers if callable(i)]
-        if apply_default_fixer:
-            fixers.insert(0, html_fixer)
-
-    try:
-        # Add img_variant_fixer if we are running this in Plone 6.x
-        api.portal.get_registry_record("plone.picture_variants")
-        fixers.append(img_variant_fixer)
-    except InvalidParameterError:
-        pass
+        fixers = [html_fixer] + [i for i in fixers if callable(i)]
 
     # Find RichText field for all registered types
     types_with_richtext_fields = defaultdict(list)
@@ -320,8 +309,6 @@ def fix_html_in_content_fields(
         "portal_type": list(types_with_richtext_fields.keys()),
         "sort_on": "path",
     }
-    if context is not None:
-        query["path"] = "/".join(context.getPhysicalPath())
     brains = catalog(**query)
     total = len(brains)
     logger.info(
@@ -336,9 +323,6 @@ def fix_html_in_content_fields(
             logger.warning(
                 "Could not get object for: %s", brain.getPath(), exc_info=True
             )
-            continue
-        if obj is None:
-            logger.error(u"brain.getObject() is None %s", brain.getPath())
             continue
         try:
             changed = False
@@ -356,7 +340,7 @@ def fix_html_in_content_fields(
                             clean_text = fixer(clean_text, obj)
                         except Exception:
                             logger.info(
-                                u"Error while fixing html of %s for %s",
+                                "Error while fixing html of %s for %s",
                                 fieldname,
                                 obj.absolute_url(),
                             )
@@ -372,7 +356,7 @@ def fix_html_in_content_fields(
                         setattr(obj, fieldname, textvalue)
                         changed = True
                         logger.debug(
-                            u"Fixed html for field %s of %s",
+                            "Fixed html for field %s of %s",
                             fieldname,
                             obj.absolute_url(),
                         )
@@ -386,7 +370,7 @@ def fix_html_in_content_fields(
         if fixed_items != 0 and not fixed_items % 1000:
             # Commit every 1000 changed items.
             logger.info(
-                u"Fix html for %s (%s) of %s items (changed %s fields in %s items)",
+                "Fix html for %s (%s) of %s items (changed %s fields in %s items)",
                 index,
                 round(index / total * 100, 2),
                 total,
@@ -397,7 +381,7 @@ def fix_html_in_content_fields(
                 transaction.commit()
 
     logger.info(
-        u"Finished fixing html in content fields (changed %s fields in %s items)",
+        "Finished fixing html in content fields (changed %s fields in %s items)",
         fixed_fields,
         fixed_items,
     )
