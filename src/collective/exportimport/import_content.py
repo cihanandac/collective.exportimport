@@ -416,8 +416,11 @@ class ImportContent(BrowserView):
                     language = item.get("language")
                     # logger.debug(f"priref value={priref_value}")
                     if priref_value:
+                        path = f"/{language}"
                         priref_items = catalog.unrestrictedSearchResults(
-                            portal_type="exhibition", Language=language, priref=priref_value
+                            portal_type="exhibition",
+                            path={'query': path, 'depth': 1},  # Adjust depth as needed
+                            priref=priref_value
                         )
                         if priref_items:
                             existing = priref_items[0].getObject()
