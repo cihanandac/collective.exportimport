@@ -422,7 +422,6 @@ class ImportContent(BrowserView):
                         )
                         if priref_items:
                             existing = priref_items[0].getObject()
-                            container = existing.__parent__
                             logger.debug(
                                 "Found existing item by priref: %s", priref_value
                             )
