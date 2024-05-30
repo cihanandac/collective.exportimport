@@ -413,10 +413,11 @@ class ImportContent(BrowserView):
                 logger.debug("Checking by priref")
                 if item["@type"] == "exhibition":
                     priref_value = item.get("priref")
+                    language = item.get("language")
                     # logger.debug(f"priref value={priref_value}")
                     if priref_value:
                         priref_items = catalog.unrestrictedSearchResults(
-                            portal_type="exhibition", priref=priref_value
+                            portal_type="exhibition", Language=language, priref=priref_value
                         )
                         if priref_items:
                             existing = priref_items[0].getObject()
