@@ -421,12 +421,18 @@ class ImportContent(BrowserView):
                             portal_type="exhibition", Language=language, priref=priref_value
                         )
                         if priref_items:
-                            existing = priref_items[0].getObject()
+                            priref_item = priref_items[0].getObject()
+                            priref_item_id = priref_item.getId()
+                            container.manage_renameObject(priref_item_id, item["id"])
+                            existing = container[item["id"]]
                             logger.debug(
-                                "Found existing item by priref: %s", priref_value
+                                "Found existing item by priref: %s and renamed id from %s to %s",
+                                priref_value, priref_item_id, item["id"]
                             )
+                    else:
+                        logger.debug("priref not found in item")
                 else:
-                    logger.debug("Item type is not exhibition or priref not found")
+                    logger.debug("Item type is not exhibition")
 
             # logger.debug(f"Existing= {existing}")
             if existing:
