@@ -500,9 +500,11 @@ class ExportOrdering(BaseExport):
                     results.append({"uuid": uid, "order": order})
             return
 
-        portal = api.portal.get()
-        portal.ZopeFindAndApply(
-            portal, search_sub=True, apply_func=get_position_in_parent
+        path = "/".join(self.context.getPhysicalPath())
+        root = self.context.unrestrictedTraverse(path.lstrip('/'))
+
+        root.ZopeFindAndApply(
+            root, search_sub=True, apply_func=get_position_in_parent
         )
         return sorted(results, key=itemgetter("order"))
 
